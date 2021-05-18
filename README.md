@@ -7,8 +7,137 @@ Wine quality is typically determined through scent and taste. Modern day data co
 #### Neural Network
 
 ``` python
+import os
+import matplotlib.pyplot as plt
+import tensorflow as tf
+import pandas as pd
+from tensorflow import keras
 
+wine = pd.read_csv('/content/winequality-red (1).csv')
+wine2 = wine.copy()
+wine3 = wine.copy()
+wine4 = wine.copy()
+
+#Obtaining maximum for each column
+maximum = []
+
+for i in wine.columns:
+  maximum.append(wine[i].max())
+  print(wine[i].max())
+
+#Changing wine to match version 1 specifications
+#Good/Bad categories of quality
+wine['good'] = wine['quality'] >=6
+idxGood = wine['quality'] >= 6
+wine['good'] = 0
+wine.loc[idxGood, 'good'] = 1
+
+#Drop quality column
+wine.drop(columns = 'quality')
+
+#Normalizing version 1
+wine['fixed acidity'] = wine['fixed acidity'] / maximum[0]
+wine['volatile acidity'] = wine['volatile acidity'] / maximum[1]
+wine['citric acid'] = wine['citric acid'] / maximum[2]
+wine['residual sugar'] = wine['residual sugar'] / maximum[3]
+wine['chlorides'] = wine['chlorides'] / maximum[4]
+wine['free sulfur dioxide'] = wine['free sulfur dioxide'] / maximum[5]
+wine['total sulfur dioxide'] = wine['total sulfur dioxide'] / maximum[6]
+wine['density'] = wine['density'] / maximum[7]
+wine['pH'] = wine['pH'] / maximum[8]
+wine['sulphates'] = wine['sulphates'] / maximum[9]
+wine['alcohol'] = wine['alcohol'] / maximum[10]
+
+#Changing wine2 to match version 2 specifications
+#Good/Bad categories of quality
+wine2['good'] = wine2['quality'] >=6
+
+#Drop quality column
+wine.drop(columns = 'quality')
+
+#Changing wine3 to match version 3 specifications
+wine3['fixed acidity'] = wine['fixed acidity'] / maximum[0]
+wine3['volatile acidity'] = wine['volatile acidity'] / maximum[1]
+wine3['citric acid'] = wine['citric acid'] / maximum[2]
+wine3['residual sugar'] = wine['residual sugar'] / maximum[3]
+wine3['chlorides'] = wine['chlorides'] / maximum[4]
+wine3['free sulfur dioxide'] = wine['free sulfur dioxide'] / maximum[5]
+wine3['total sulfur dioxide'] = wine['total sulfur dioxide'] / maximum[6]
+wine3['density'] = wine['density'] / maximum[7]
+wine3['pH'] = wine['pH'] / maximum[8]
+wine3['sulphates'] = wine['sulphates'] / maximum[9]
+wine3['alcohol'] = wine['alcohol'] / maximum[10]
+
+#Split data
+from sklearn.model_selection import train_test_split as tts
+train, test = tts(wine)
+train2, test2 = tts(wine2)
+train3, test3 = tts(wine3)
+train4, test4 = tts(wine4)
+
+# column order in CSV file
+column_names = ['fixed acidity', 'volatile acidity', 'citric acid', 'residual sugar', 'chlorides', 'free sulfur dioxide',
+                'total sulfur dioxide','density','pH','sulphates','alcohol','quality','good']
+
+feature_names = column_names[:-2]
+reg_label_name = column_names[-2]
+gb_label_name = column_names[-1]
+
+print("Features: {}".format(feature_names))
+print("Label: {}".format(reg_label_name))
+print("Label: {}".format(gb_label_name))
+
+#Version 1
+train_x = train[feature_names]
+train_y = train[gb_label_name]
+
+test_x = test[feature_names]
+test_y = test[gb_label_name]
+
+#Version2
+train_x2 = train2[feature_names]
+train_y2 = train2[gb_label_name]
+
+test_x2 = test2[feature_names]
+test_y2 = test2[gb_label_name]
+
+#Version3
+train_x3 = train3[feature_names]
+train_y3 = train3[reg_label_name]
+
+test_x3 = test3[feature_names]
+test_y3 = test3[reg_label_name]
+
+#Version4
+train_x4 = train4[feature_names]
+train_y4 = train4[reg_label_name]
+
+test_x4 = test4[feature_names]
+test_y4 = test4[reg_label_name]
+
+#Model A versions 1 & 2 
+model = tf.keras.Sequential([
+  tf.keras.layers.Dense(1024, activation=tf.nn.relu, input_shape = (11,)), 
+  tf.keras.layers.Dense(512, activation = tf.nn.relu),
+  tf.keras.layers.Dense(256, activation = tf.nn.relu),
+  tf.keras.layers.Dense(2, activation = tf.nn.softmax)])
+model.compile(optimizer = 'adam',
+              loss = 'sparse_categorical_crossentropy',
+              metrics = ['accuracy'])
+              
+#Model B versions 3&4
+model2 = tf.keras.Sequential([
+  tf.keras.layers.Dense(1024, activation=tf.nn.relu, input_shape = (11,)), 
+  tf.keras.layers.Dense(512, activation = tf.nn.relu),
+  tf.keras.layers.Dense(256, activation = tf.nn.relu),
+  tf.keras.layers.Dense(10, activation = tf.nn.softmax)])
+model.compile(optimizer = 'adam',
+              loss = 'sparse_categorical_crossentropy',
+              metrics = ['accuracy'])
 ```
+
+To fit model, I used model.fit(train_x, train_y, epochs = 10) and substituted the different versions of train_x and train_y depending on what model I was fitting 
+To evaluate the model, I used model.evaluate(test_x, test_y) for the corresponding version of the model/train_x and train_y
 
 #### Random Forest
 
